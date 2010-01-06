@@ -1,0 +1,10 @@
+# http://matthewhutchinson.net/2009/11/26/bluepill-monitoring-delayed_job
+
+Bluepill.application("bugle") do |app|
+  app.process("delayed_job") do |process|
+    process.start_command = "/apps/bugle/current/script/delayed_job start -eproduction"
+    process.pid_file = "/apps/bugle/current/tmp/pids/delayed_job.pid"
+    process.uid = "bugle"
+    process.gid = "bugle"
+  end
+end

@@ -1,0 +1,19 @@
+# http://mickeyben.com/2009/12/22/monitoring-apache-with-bluepill.html
+
+Bluepill.application("httpd") do |app|
+	app.process("httpd") do |process|
+		process.pid_file = "/var/run/httpd/httpd.pid"
+		process.start_command = "apachectl start"
+		process.stop_command = "apachectl stop"
+		process.restart_command = "apachectl restart"
+		
+		process.start_grace_time = 10.seconds
+		process.stop_grace_time = 10.seconds
+		process.restart_grace_time = 10.seconds
+		
+		process.checks :cpu_usage, :every => 10.seconds, :below => 5, :times => 3
+    process.checks :mem_usage, :every => 10.seconds, :below => 100.megabytes, :times => [3,5]
+
+    
+	end
+end

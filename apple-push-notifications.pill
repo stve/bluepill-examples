@@ -1,0 +1,34 @@
+# http://gist.github.com/267175
+
+Bluepill.application("apn") do |app|
+
+  def pem(type)
+    "/home/nathan/certs/push.#{type}.pem"
+  end
+
+  def server(sandbox = false)
+    "gateway#{sandbox ? ".sandbox" : ""}.push.apple.com"
+  end
+
+  def command(pem_type, sandbox = false)
+    "apnserverd --pem #{pem(pem_type)} --server #{server(sandbox)} --daemon --pid /home/nathan/bluepill/pids/apn.#{pem_type}.pid --log /home/nathan/bluepill/logs/apn.#{pem_type}.log --proxy-port #{@proxy_port}"
+  end
+
+  @proxy_port = 22195
+
+  %w(release beta.release debug.dev).each do |apn|
+
+    app.process("apn.#{apn}") do |process|
+      process.start_command = command(apn, apn =~ /dev/)
+      process.stop_command = "kill -9 {{PID}}"
+      process.pid_file = "/home/nathan/bluepill/pids/apn.#{apn}.pid"
+      process.checks :cpu_usage, :every => 30.seconds, :below => 30, :times => 3
+      process.checks :mem_usage, :every => 10.seconds, :below => 20.megabytes, :times => [3,5]
+      process.checks :flapping, :times => 2, :within => 30.seconds, :retry_in => 7.seconds
+    end
+
+    @proxy_port += 10000
+
+  end
+
+end
