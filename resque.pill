@@ -1,0 +1,39 @@
+# http://gist.github.com/289261
+
+Bluepill.define_process_condition(:running_time) do
+  def initialize(options = {})
+    @below = options[:below]
+  end
+
+  def run(pid)
+    started = `ps -p #{pid} -o command`.match(/since (\d+)/)[1].to_i
+    Time.now - Time.at(started)
+  rescue
+    0
+  end
+
+  def check(value)
+    value.seconds < @below
+  end
+end
+
+Bluepill.application('MyApp') do |app|
+  app.working_dir = "/var/rails"
+
+  app.process("resque-worker") do |p|
+    p.start_command = "/usr/bin/rake RAILS_ENV=staging QUEUES=critical,high,low resque:work"
+    p.stop_command = "kill {{PID}}"
+    p.daemonize = true
+    p.pid_file = "/var/rails/tmp/pids/resque.pid"
+
+    p.start_grace_time = 10.seconds
+    p.stop_grace_time = 5.seconds
+    p.restart_grace_time = 15.seconds
+
+    p.monitor_children do |c|
+      c.stop_command = "kill -USR1 {{PID}}"
+      c.checks :mem_usage, :every => 30.seconds, :below => 80.megabytes, :fires => :stop
+      c.checks :running_time, :every => 30.seconds, :below => 10.minutes, :fires => :stop
+    end
+  end
+end
