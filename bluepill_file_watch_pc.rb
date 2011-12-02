@@ -18,7 +18,7 @@ Bluepill.define_process_condition(:log_watch) do
       file.grep(@regexp)
     end
   end
-  
+
   def check(value)
     value.empty?
   end
