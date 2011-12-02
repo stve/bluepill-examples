@@ -1,0 +1,16 @@
+# https://gist.github.com/1089918
+
+Bluepill.application("graylog2", :log_file => "/var/log/bluepill/graylog2.log") do |app|
+  app.uid = "root"
+  app.gid = "root"
+
+  app.process("server") do |process|
+    process.working_dir   = "/var/graylog2/server"
+    process.start_command = "/usr/bin/java -jar graylog2-server.jar -DconfigPath=/etc/graylog2.conf"
+    process.daemonize = true
+
+    process.start_grace_time   = 10.seconds
+    process.stop_grace_time    = 10.seconds
+    process.restart_grace_time = 10.seconds
+  end
+end
